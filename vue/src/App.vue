@@ -9,6 +9,9 @@
         <router-link to="/">
           Home
         </router-link>
+        <router-link to="/profile">
+          Profiel
+        </router-link>
         <button v-on:click="refreshToken">RefreshToken</button>
       </div>
     </header>
@@ -49,11 +52,13 @@ export default {
       params.append('grant_type', 'refresh_token')
       axios.post('https://accounts.spotify.com/api/token', params, config)
         .then(function (response) {
-          console.log(response)
+          var spotifyTokens = JSON.stringify(response.data)
+          localStorage.setItem('spotifyTokens', spotifyTokens)
         })
         .catch(function (error) {
           console.log(error)
         })
+      location.reload()
     }
   },
   mounted: function () {

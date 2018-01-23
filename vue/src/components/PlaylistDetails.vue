@@ -1,8 +1,7 @@
 <template>
   <div class="playlist-detail">
     <ul v-for="item in playlist.tracks.items">
-    <audio controls :src="item.track.preview_url"></audio>
-    
+    <audio controls :src="item.track.preview_url">Preview</audio>
       <div v-for="image in item.track.album.images.slice(0, 1)">
         <img width="100" :src="image.url">
       </div>
@@ -10,7 +9,6 @@
         <span v-for="artist in item.track.artists">{{ artist.name }} - </span>{{ item.track.name }}
       </li>
     </ul>
-
   </div>
 </template>
 
