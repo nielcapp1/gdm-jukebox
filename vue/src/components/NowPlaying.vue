@@ -228,20 +228,19 @@ export default {
       return i
     },
     calculateTime () {
-      if (this.device === false) {
-        if (this.newProcessTrack > (this.durationTrack / 1000)) {
-          this.nowPlaying()
-        }
-        if (this.playing === false) {
-          return this.newProcessTrack
-        } else {
-          this.newProcessTrack = ((this.progressTrack += 1000) / 1000)
-          return this.newProcessTrack
-        }
+      if (this.newProcessTrack > (this.durationTrack / 1000)) {
+        this.nowPlaying()
+      }
+      if (this.playing === false) {
+        return this.newProcessTrack
+      } else {
+        this.newProcessTrack = ((this.progressTrack += 1000) / 1000)
+        return this.newProcessTrack
       }
     },
     counter () {
-      if (this.device === true) {
+      console.log(this.device)
+      if (this.device === false) {
         setInterval(function () {
           this.calculateTime()
         }.bind(this), 1000)
