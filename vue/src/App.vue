@@ -1,42 +1,33 @@
 <template>
   <div id="app">
-    <header>
-      <div class="user_profile">
-        <img :src="profilePicture">
-      </div>
-      <span>GDM Jukebox</span>
-      <div class="navigation">
-        <router-link to="/">
-          Home
-        </router-link>
-        <router-link to="/profile">
-          Profiel
-        </router-link>
-        <button v-on:click="refreshToken">RefreshToken</button>
-      </div>
-    </header>
     <main>
       <router-view></router-view>
+      <navigation-bottom v-if="confirmUser"></navigation-bottom>
     </main>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
+import navigation from './components/Navigation.vue'
 export default {
   name: 'app',
   data () {
     return {
       currentUser: {},
-      profilePicture: ''
+      profilePicture: '',
+      confirmUser: false
     }
+  },
+  components: {
+    'navigation-bottom': navigation
   },
   methods: {
     checkIfAuthenticated: function () {
       if (localStorage.currentUser !== undefined) {
         this.currentUser = JSON.parse(localStorage.currentUser)
         this.profilePicture = this.currentUser.images[0].url
-        console.log(this.currentUser)
+        this.confirmUser = true
       }
     },
     refreshToken: function () {
@@ -56,7 +47,9 @@ export default {
           localStorage.setItem('spotifyTokens', spotifyTokens)
         })
         .catch(function (error) {
-          console.log(error)
+          if (error.response.data.error_description === 'Invalid refresh token') {
+            localStorage.clear()
+          }
         })
       location.reload()
     }
@@ -68,55 +61,19 @@ export default {
 </script>
 
 <style>
-
-@import url('https://fonts.googleapis.com/css?family=Montserrat');
-
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700');
+main,*{margin:0;padding:0;}
 body {
   margin: 0;
-  font-family: 'Montserrat', sans-serif;
+}
+
+#app {
+  font-family: 'Open Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #FFF;
-  background-color: #262626;
+  color: #2c3e50;
 }
-
-header {
-  margin: 0;
-  height: 60px;
-  padding: 0 16px 0 24px;
-  background-color: #1DB954;
-  color: #FFF;
-}
-
-header span {
-  display: block;
-  float: left;
-  position: relative;
-  font-size: 20px;
-  line-height: 1;
-  letter-spacing: .02em;
-  font-weight: 800;
-  box-sizing: border-box;
-  margin: 20px 10px;
-}
-
-.user_profile {
-  float: left;
-  display: inline-block;
-}
-
-.user_profile img {
-  border-radius: 20px;
-  margin: 10px;
-  height: 40px;
-}
-
-.navigation a {
-  float: right;
-  color: #FFF;
-  font-size: 16px;
-  margin: 22px 0px 0px 20px;
-  text-decoration: none; 
-}
+img{max-width: 100%;}
 
 </style>
+
