@@ -1,5 +1,5 @@
 <template>
-<div class="home-template animated fadeIn"">
+<div class="home-template animated fadeIn">
   <div class="login" v-if="!currentUser">
         <div class="logo-box">
             <svg version="1.1" id="Logo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -48,8 +48,6 @@ export default {
       client_id: '0564053a9afb4f3ebe7ced5019e40fb8',
       client_secret: '25c970866d194c38844092f4334486ed',
       redirect_uri: 'http%3A%2F%2Flocalhost%3A8080%2Fcallback',
-      // state: '',
-      // stateKey: 'spotify_auth_state',
       scope: 'playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private streaming ugc-image-upload user-follow-modify user-follow-read user-library-read user-library-modify user-read-private user-read-birthdate user-read-email user-top-read user-read-playback-state user-modify-playback-state user-read-currently-playing user-read-recently-played',
       currentUser: '',
       confirmUser: '',
@@ -63,6 +61,7 @@ export default {
       if (localStorage.currentUser !== undefined) {
         this.currentUser = JSON.parse(localStorage.currentUser)
         this.confirmUser = true
+        this.getPlaylists()
       }
     },
     login () {
@@ -99,7 +98,6 @@ export default {
     },
     getPlaylists () {
       var spotifyTokens = JSON.parse(localStorage.spotifyTokens)
-      console.log(spotifyTokens)
       let config = {
         headers: {
           'Authorization': 'Bearer ' + spotifyTokens.access_token
@@ -124,7 +122,6 @@ export default {
   },
   mounted: function () {
     this.checkIfAuthenticated()
-    this.getPlaylists()
   }
 }
 </script>

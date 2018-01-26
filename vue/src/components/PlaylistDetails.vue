@@ -32,7 +32,9 @@ export default {
       playlist: {},
       playlistCover: '',
       tracks: [],
-      currentUser: ''
+      currentUser: '',
+      device: '',
+      deviceId: ''
     }
   },
   methods: {
@@ -42,6 +44,28 @@ export default {
         this.status = true
         console.log(this.currentUser)
       }
+    },
+    getDevice: function () {
+      var spotifyTokens = JSON.parse(localStorage.spotifyTokens)
+      console.log(spotifyTokens.access_token)
+      let config = {
+        headers: {
+          'Authorization': 'Bearer ' + spotifyTokens.access_token
+        }
+      }
+      var self = this
+      axios.get('https://api.spotify.com/v1/me/player/devices', config)
+        .then(function (response) {
+          if (response.data.devices.length === 0) {
+            self.device = true
+          } else {
+            self.deviceId = response.data.devices[0].id
+            console.log(self.deviceId)
+          }
+        })
+        .catch(function (error) {
+          console.log(error)
+        })
     },
     refreshToken: function () {
       var config = {
@@ -76,11 +100,14 @@ export default {
           'Authorization': 'Bearer ' + spotifyTokens.access_token
         }
       }
-      axios.put('https://api.spotify.com/v1/me/player/play', {
+      axios.put('https://api.spotify.com/v1/me/player/play?&device_id=' + this.deviceId, {
         'context_uri': this.playlist.uri
       }, config)
         .then(function (response) {
           console.log(response)
+          if (response.status === 202) {
+            alert('Er zijn geen devices beschikbaar.')
+          }
         })
         .catch(function (error) {
           console.log(error.response)
@@ -110,6 +137,7 @@ export default {
   mounted: function () {
     this.checkIfAuthenticated()
     this.getPlaylist()
+    this.getDevice()
   }
 }
 </script>

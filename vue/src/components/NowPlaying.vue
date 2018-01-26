@@ -1,37 +1,45 @@
 <template>
   <div class="player animated fadeIn">
     <div class="audio-player">
-      <div class="cover-image">
-        <h3>{{ artist }}</h3>
-        <h2>{{ track }}</h2>
-        <img :src="albumCover">
-      </div>
-      <div class="info">
-        <div v-if="newProcessTrack == ''">
-          <p id="timestart">{{ progressOnLoad }}</p>
-          <div id="myProgress">
-            <div v-bind:style="{ width: percentage + '%' }" id="myBar">
+      <div v-if="device == false">
+        <div class="cover-image">
+          <h3>{{ artist }}</h3>
+          <h2>{{ track }}</h2>
+          <img :src="albumCover">
+        </div>
+        <div class="info">
+          <div v-if="newProcessTrack == ''">
+            <p id="timestart">{{ progressOnLoad }}</p>
+            <div id="myProgress">
+              <div v-bind:style="{ width: percentage + '%' }" id="myBar">
+              </div>
             </div>
           </div>
-        </div>
-        <div v-else>
-          <p id="timestart">{{ progressSeconds }}</p>
-          <div id="myProgress">
-            <div v-bind:style="{ width: percentage + '%' }" id="myBar">
+          <div v-else>
+            <p id="timestart">{{ progressSeconds }}</p>
+            <div id="myProgress">
+              <div v-bind:style="{ width: percentage + '%' }" id="myBar">
+              </div>
             </div>
           </div>
+          <p id="timesleft">{{ durationSeconds }}</p>
+          <div hidden>
+            {{ percentageTrack }}
+          </div>
         </div>
-        <p id="timesleft">{{ durationSeconds }}</p>
-        <div hidden>
-          {{ percentageTrack }}
+        <div class="controls">
+          <div class="controls_plays">
+            <i v-on:click="previousTrack" class="fa fa-step-backward" aria-hidden="true"></i>
+            <i v-if="playing === true" v-on:click="pauseTrack" class="fa fa-pause" aria-hidden="true"></i>
+            <i v-else v-on:click="playTrack" class="fa fa-play " aria-hidden="true"></i>
+            <i v-on:click="nextTrack" class="fa fa-step-forward" aria-hidden="true"></i>
+          </div>
         </div>
       </div>
-      <div class="controls">
-        <div class="controls_plays">
-          <i v-on:click="previousTrack" class="fa fa-step-backward" aria-hidden="true"></i>
-          <i v-if="playing === true" v-on:click="pauseTrack" class="fa fa-pause" aria-hidden="true"></i>
-          <i v-else v-on:click="playTrack" class="fa fa-play " aria-hidden="true"></i>
-          <i v-on:click="nextTrack" class="fa fa-step-forward" aria-hidden="true"></i>
+      <div v-if="device == true">
+        <div>
+          <h1>Er zijn geen devices beschikbaar</h1>
+          <button v-on:click="nowPlaying">Refresh</button>
         </div>
       </div>
     </div>
@@ -53,7 +61,8 @@ export default {
       progressTrack: '',
       newProcessTrack: '',
       percentage: '',
-      playing: ''
+      playing: '',
+      device: ''
     }
   },
   methods: {
@@ -64,6 +73,33 @@ export default {
         console.log(this.currentUser)
       }
     },
+    refreshToken: function () {
+      var config = {
+        headers: {
+          'Authorization': 'Basic MDU2NDA1M2E5YWZiNGYzZWJlN2NlZDUwMTllNDBmYjg6MjVjOTcwODY2ZDE5NGMzODg0NDA5MmY0MzM0NDg2ZWQ='
+        },
+        json: true
+      }
+      var spotifyTokens = JSON.parse(localStorage.spotifyTokens)
+      var params = new URLSearchParams()
+      params.append('refresh_token', spotifyTokens.refresh_token)
+      params.append('grant_type', 'refresh_token')
+      console.log(spotifyTokens.refresh_token)
+      axios.post('https://accounts.spotify.com/api/token', params, config)
+        .then(function (response) {
+          var spotifyTokens = JSON.stringify(response.data)
+          localStorage.setItem('spotifyTokens', spotifyTokens)
+          alert('JOO')
+        })
+        .catch(function (error) {
+          console.log(error.response)
+          // if (error.response.data.error_description === 'Invalid refresh token') {
+          //   localStorage.clear()
+          //   window.location.replace('http://localhost:8080')
+          // }
+        })
+      // location.reload()
+    },
     nowPlaying: function () {
       var spotifyTokens = JSON.parse(localStorage.spotifyTokens)
       let config = {
@@ -71,18 +107,26 @@ export default {
           'Authorization': 'Bearer ' + spotifyTokens.access_token
         }
       }
+      this.device = false
+      console.log(spotifyTokens.access_token)
       var self = this
       axios.get('https://api.spotify.com/v1/me/player/currently-playing', config)
         .then(function (response) {
-          self.playing = response.data.is_playing
-          self.durationTrack = response.data.item.duration_ms
-          self.progressTrack = response.data.progress_ms
-          self.track = response.data.item.name
-          self.artist = response.data.item.album.artists[0].name
-          self.albumCover = response.data.item.album.images[0].url
+          console.log(response)
+          if (response.status === 200) {
+            self.device = false
+            self.playing = response.data.is_playing
+            self.durationTrack = response.data.item.duration_ms
+            self.progressTrack = response.data.progress_ms
+            self.track = response.data.item.name
+            self.artist = response.data.item.album.artists[0].name
+            self.albumCover = response.data.item.album.images[0].url
+            console.log(self.device)
+          }
         })
         .catch(function (error) {
           console.log(error)
+          // self.refreshToken()
         })
     },
     playTrack () {
@@ -96,7 +140,11 @@ export default {
       axios.put('https://api.spotify.com/v1/me/player/play', {}, config)
         .then(function (response) {
           console.log(response)
-          this.nowPlaying()
+          if (response.status === 202) {
+            this.device = false
+          } else {
+            this.nowPlaying()
+          }
         })
         .catch(function (error) {
           console.log(error.response)
@@ -114,7 +162,11 @@ export default {
       axios.put('https://api.spotify.com/v1/me/player/pause', {}, config)
         .then(function (response) {
           console.log(response)
-          this.nowPlaying()
+          if (response.status === 202) {
+            this.device = false
+          } else {
+            this.nowPlaying()
+          }
         })
         .catch(function (error) {
           console.log(error.response)
@@ -136,6 +188,10 @@ export default {
           if (response.status === 204) {
             self.nowPlaying()
             location.reload()
+          } else if (response.status === 202) {
+            this.device = false
+          } else {
+            this.nowPlaying()
           }
         })
         .catch(function (error) {
@@ -156,6 +212,10 @@ export default {
           if (response.status === 204) {
             self.nowPlaying()
             location.reload()
+          } else if (response.status === 202) {
+            this.device = false
+          } else {
+            this.nowPlaying()
           }
         })
         .catch(function (error) {
@@ -168,42 +228,25 @@ export default {
       }
       return i
     },
-    refreshToken: function () {
-      var config = {
-        headers: {
-          'Authorization': 'Basic MDU2NDA1M2E5YWZiNGYzZWJlN2NlZDUwMTllNDBmYjg6MjVjOTcwODY2ZDE5NGMzODg0NDA5MmY0MzM0NDg2ZWQ='
-        },
-        json: true
-      }
-      var spotifyTokens = JSON.parse(localStorage.spotifyTokens)
-      var params = new URLSearchParams()
-      params.append('refresh_token', spotifyTokens.refresh_token)
-      params.append('grant_type', 'refresh_token')
-      axios.post('https://accounts.spotify.com/api/token', params, config)
-        .then(function (response) {
-          var spotifyTokens = JSON.stringify(response.data)
-          localStorage.setItem('spotifyTokens', spotifyTokens)
-        })
-        .catch(function (error) {
-          console.log(error)
-        })
-      location.reload()
-    },
     calculateTime () {
-      if (this.newProcessTrack > (this.durationTrack / 1000)) {
-        this.nowPlaying()
-      }
-      if (this.playing === false) {
-        return this.newProcessTrack
-      } else {
-        this.newProcessTrack = ((this.progressTrack += 1000) / 1000)
-        return this.newProcessTrack
+      if (this.device === false) {
+        if (this.newProcessTrack > (this.durationTrack / 1000)) {
+          this.nowPlaying()
+        }
+        if (this.playing === false) {
+          return this.newProcessTrack
+        } else {
+          this.newProcessTrack = ((this.progressTrack += 1000) / 1000)
+          return this.newProcessTrack
+        }
       }
     },
     counter () {
-      setInterval(function () {
-        this.calculateTime()
-      }.bind(this), 1000)
+      if (this.device === false) {
+        setInterval(function () {
+          this.calculateTime()
+        }.bind(this), 1000)
+      }
     }
   },
   computed: {
@@ -266,10 +309,11 @@ export default {
 {
     width: 58%;
     margin: 0 auto;
-    max-width: 400px;
+    max-width: 300px;
     margin-bottom: 60px;
+    text-align:center;
 }
-.cover-image img {margin-top: 40px;}
+.cover-image img {margin-top: 40px;max-width: 300px;width: 100%;}
 .cover-image h3
 {
     text-align: center;
@@ -281,9 +325,11 @@ export default {
 .player
 {
     width: 90%;
-    margin: 0 auto;
-    margin-top: 50px;
-    margin-bottom: 80px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -55%);
+    
 }
 .info
 {
