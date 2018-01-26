@@ -1,7 +1,7 @@
 <template>
   <div class="player animated fadeIn">
     <div class="audio-player">
-      <div v-if="device == false">
+      <div v-if="device == true">
         <div class="cover-image">
           <h3>{{ artist }}</h3>
           <h2>{{ track }}</h2>
@@ -36,9 +36,10 @@
           </div>
         </div>
       </div>
-      <div v-if="device == true">
-        <div>
-          <h1>Er zijn geen devices beschikbaar</h1>
+      <div v-if="device == false">
+        <div class="no-device">
+          <h3>Er zijn geen devices beschikbaar</h3>
+          <br>
           <button v-on:click="nowPlaying">Refresh</button>
         </div>
       </div>
@@ -62,7 +63,7 @@ export default {
       newProcessTrack: '',
       percentage: '',
       playing: '',
-      device: ''
+      device: false
     }
   },
   methods: {
@@ -93,12 +94,11 @@ export default {
         })
         .catch(function (error) {
           console.log(error.response)
-          // if (error.response.data.error_description === 'Invalid refresh token') {
-          //   localStorage.clear()
-          //   window.location.replace('http://localhost:8080')
-          // }
+          if (error.response.data.error_description === 'Invalid refresh token') {
+            localStorage.clear()
+            window.location.replace('http://localhost:8080')
+          }
         })
-      // location.reload()
     },
     nowPlaying: function () {
       var spotifyTokens = JSON.parse(localStorage.spotifyTokens)
@@ -107,26 +107,24 @@ export default {
           'Authorization': 'Bearer ' + spotifyTokens.access_token
         }
       }
-      this.device = false
       console.log(spotifyTokens.access_token)
       var self = this
       axios.get('https://api.spotify.com/v1/me/player/currently-playing', config)
         .then(function (response) {
           console.log(response)
           if (response.status === 200) {
-            self.device = false
+            self.device = true
             self.playing = response.data.is_playing
             self.durationTrack = response.data.item.duration_ms
             self.progressTrack = response.data.progress_ms
             self.track = response.data.item.name
             self.artist = response.data.item.album.artists[0].name
             self.albumCover = response.data.item.album.images[0].url
-            console.log(self.device)
           }
         })
         .catch(function (error) {
           console.log(error)
-          // self.refreshToken()
+          self.refreshToken()
         })
     },
     playTrack () {
@@ -242,7 +240,7 @@ export default {
       }
     },
     counter () {
-      if (this.device === false) {
+      if (this.device === true) {
         setInterval(function () {
           this.calculateTime()
         }.bind(this), 1000)
@@ -277,17 +275,36 @@ export default {
       return duration
     }
   },
-  mounted: function () {
-    this.checkIfAuthenticated()
+  created () {
     this.nowPlaying()
     this.counter()
+  },
+  mounted: function () {
+    this.checkIfAuthenticated()
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
-
+.no-device {
+  color:rgba(112, 107, 123, 0.8);
+  text-align: center;
+}
+.no-device button {
+  width:150px;
+  display:block;
+  margin: 0 auto;
+  background:#8FC46B;
+  border:none;
+  color:white;
+  height:40px;
+  z-index:999;
+  border-radius:50px;
+  font-size: 18px;
+  margin-top: 50px;
+  font-weight: 600;
+}
 .button_details_above
 {
     position: absolute;

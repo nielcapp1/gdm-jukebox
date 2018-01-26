@@ -85,6 +85,8 @@ export default {
   },
   mounted: function () {
     this.checkIfAuthenticated()
+  },
+  created () {
     this.getUserInfo()
   }
 }

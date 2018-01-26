@@ -136,8 +136,8 @@ export default {
   },
   mounted: function () {
     this.checkIfAuthenticated()
-    this.getPlaylist()
     this.getDevice()
+    this.getPlaylist()
   }
 }
 </script>
