@@ -78,17 +78,17 @@ export default {
       var params = new URLSearchParams()
       params.append('refresh_token', spotifyTokens.refresh_token)
       params.append('grant_type', 'refresh_token')
+      console.log(spotifyTokens.refresh_token)
       axios.post('https://accounts.spotify.com/api/token', params, config)
         .then(function (response) {
           var spotifyTokens = JSON.stringify(response.data)
           localStorage.setItem('spotifyTokens', spotifyTokens)
-          location.reload()
         })
         .catch(function (error) {
           console.log(error.response)
           if (error.response.data.error_description === 'Invalid refresh token') {
             localStorage.clear()
-            location.reload()
+            window.location.replace('http://localhost:8080')
           }
         })
     },

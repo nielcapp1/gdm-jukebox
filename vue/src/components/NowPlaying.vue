@@ -40,6 +40,8 @@
         <div class="no-device">
           <h3>Er zijn geen devices beschikbaar</h3>
           <br>
+          <p>Open de spotify App en speel iets af</p>
+          <br>
           <button v-on:click="nowPlaying">Refresh</button>
         </div>
       </div>
@@ -90,7 +92,6 @@ export default {
         .then(function (response) {
           var spotifyTokens = JSON.stringify(response.data)
           localStorage.setItem('spotifyTokens', spotifyTokens)
-          alert('JOO')
         })
         .catch(function (error) {
           console.log(error.response)
